@@ -1,0 +1,818 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>izim — İklim Değişikliği Farkındalık Platformu</title>
+  <meta name="description"
+    content="İklim değişikliğini keşfet. Karbon ayak izini hesapla, dünya iklim haritasını incele ve 2050 senaryo oyununu oyna.">
+  <meta property="og:title" content="izim — İklim Değişikliği Farkındalık Platformu">
+  <meta property="og:description" content="Karbon ayak izini hesapla, iklim haritasını incele, 2050 senaryosunu yönet.">
+  <meta property="og:type" content="website">
+  <link rel="icon"
+    href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ---- Hero ---- */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+      padding-top: var(--nav-height);
+    }
+
+    .hero-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 15% 60%, rgba(74, 222, 128, 0.12) 0%, transparent 55%),
+        radial-gradient(ellipse at 85% 25%, rgba(245, 158, 11, 0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 90%, rgba(74, 222, 128, 0.06) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    /* Animated particles canvas */
+    #particles-canvas {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      opacity: 0.35;
+    }
+
+    /* Dot grid */
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(74, 222, 128, 0.07) 1px, transparent 1px);
+      background-size: 32px 32px;
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 2;
+      max-width: 720px;
+    }
+
+    .hero-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: rgba(74, 222, 128, 0.08);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      border-radius: var(--radius-full);
+      font-size: 0.78rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-xl);
+      animation: fadeInUp 0.6s var(--ease-out-expo) forwards;
+    }
+
+    .hero-eyebrow .dot {
+      width: 6px;
+      height: 6px;
+      background: var(--color-primary);
+      border-radius: 50%;
+      animation: pulse-glow 2s ease infinite;
+    }
+
+    .hero h1 {
+      font-size: clamp(3rem, 6vw + 1rem, 6.5rem);
+      font-weight: 900;
+      line-height: 1.05;
+      letter-spacing: -0.04em;
+      margin-bottom: var(--space-xl);
+      animation: fadeInUp 0.7s 0.1s var(--ease-out-expo) both;
+    }
+
+    .hero h1 .line-accent {
+      color: var(--color-primary);
+      font-style: italic;
+    }
+
+    .hero h1 .line-warm {
+      color: var(--color-accent);
+    }
+
+    .hero-desc {
+      font-size: clamp(1rem, 1.5vw + 0.4rem, 1.2rem);
+      color: var(--color-text-secondary);
+      line-height: 1.7;
+      max-width: 540px;
+      margin-bottom: var(--space-2xl);
+      animation: fadeInUp 0.7s 0.2s var(--ease-out-expo) both;
+    }
+
+    .hero-actions {
+      display: flex;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+      animation: fadeInUp 0.7s 0.3s var(--ease-out-expo) both;
+    }
+
+    /* Floating earth badge */
+    .hero-badge {
+      position: absolute;
+      right: 8%;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 320px;
+      height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: float 6s ease-in-out infinite;
+    }
+
+    .hero-badge-circle {
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(ellipse at 35% 35%,
+          rgba(74, 222, 128, 0.25) 0%,
+          rgba(34, 197, 94, 0.08) 50%,
+          rgba(11, 26, 20, 0.6) 100%);
+      border: 1px solid rgba(74, 222, 128, 0.2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 7rem;
+      box-shadow: 0 0 80px rgba(74, 222, 128, 0.12);
+    }
+
+    .hero-badge-ring {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      border: 1px dashed rgba(74, 222, 128, 0.15);
+      animation: spin 40s linear infinite;
+    }
+
+    .hero-badge-ring-2 {
+      position: absolute;
+      width: 340px;
+      height: 340px;
+      border-radius: 50%;
+      border: 1px dashed rgba(245, 158, 11, 0.1);
+      animation: spin 60s linear infinite reverse;
+    }
+
+    @media (max-width: 900px) {
+      .hero-badge {
+        display: none;
+      }
+
+      .hero-content {
+        max-width: 100%;
+      }
+    }
+
+    /* ---- Stats Strip ---- */
+    .stats-strip {
+      padding: var(--space-2xl) 0;
+      border-top: 1px solid var(--color-border);
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-xl);
+    }
+
+    .stat-item {
+      text-align: center;
+      padding: var(--space-lg);
+    }
+
+    .stat-item .num {
+      font-family: var(--font-display);
+      font-size: clamp(2.2rem, 3.5vw + 0.5rem, 3.8rem);
+      font-weight: 900;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: var(--space-sm);
+    }
+
+    .stat-item .num.green {
+      color: var(--color-primary);
+    }
+
+    .stat-item .num.amber {
+      color: var(--color-accent);
+    }
+
+    .stat-item .num.red {
+      color: #f87171;
+    }
+
+    .stat-item .stat-desc {
+      font-size: 0.85rem;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    .stat-item .stat-sub {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin-top: 4px;
+    }
+
+    @media (max-width: 640px) {
+      .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 0;
+      }
+
+      .stat-item {
+        border-bottom: 1px solid var(--color-border);
+      }
+    }
+
+    /* ---- About Section ---- */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap: var(--space-3xl);
+      align-items: center;
+    }
+
+    .about-facts {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      margin-top: var(--space-xl);
+    }
+
+    .about-fact {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-md);
+      padding: var(--space-md);
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      transition: border-color 0.3s ease;
+    }
+
+    .about-fact:hover {
+      border-color: var(--color-border-strong);
+    }
+
+    .about-fact-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      background: rgba(74, 222, 128, 0.1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+      flex-shrink: 0;
+    }
+
+    .about-fact-text strong {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 2px;
+    }
+
+    .about-fact-text span {
+      font-size: 0.82rem;
+      color: var(--color-text-secondary);
+    }
+
+    .about-visual {
+      position: relative;
+    }
+
+    .temp-chart-preview {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      overflow: hidden;
+    }
+
+    .temp-bars {
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      height: 120px;
+      margin-top: var(--space-md);
+    }
+
+    .temp-bar {
+      flex: 1;
+      border-radius: 3px 3px 0 0;
+      transition: height 1s var(--ease-out-expo);
+      position: relative;
+    }
+
+    .temp-bar-label {
+      position: absolute;
+      bottom: -20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.6rem;
+      color: var(--color-text-muted);
+    }
+
+    @media (max-width: 900px) {
+      .about-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .about-visual {
+        display: none;
+      }
+    }
+
+    /* ---- Feature Cards ---- */
+    .features-bg {
+      background: var(--color-surface);
+    }
+
+    .feature-card {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-2xl);
+      transition: all 0.4s var(--ease-out-expo);
+      position: relative;
+      overflow: hidden;
+      text-decoration: none;
+      display: block;
+    }
+
+    .feature-card::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(74, 222, 128, 0.04) 0%, rgba(245, 158, 11, 0.02) 100%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+
+    .feature-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-xl), var(--glow-green);
+    }
+
+    .feature-card:hover::after {
+      opacity: 1;
+    }
+
+    .feature-num {
+      font-family: var(--font-display);
+      font-size: 3.5rem;
+      font-weight: 900;
+      line-height: 1;
+      opacity: 0.08;
+      position: absolute;
+      top: var(--space-lg);
+      right: var(--space-xl);
+      color: var(--color-primary);
+    }
+
+    .feature-icon {
+      width: 52px;
+      height: 52px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--color-primary);
+      font-size: 1.5rem;
+      margin-bottom: var(--space-lg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-icon.green {
+      background: rgba(74, 222, 128, 0.12);
+    }
+
+    .feature-icon.amber {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--color-accent);
+    }
+
+    .feature-icon.sky {
+      background: rgba(56, 189, 248, 0.12);
+      color: #38bdf8;
+    }
+
+    .feature-card h3 {
+      font-size: 1.3rem;
+      margin-bottom: var(--space-sm);
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-card p {
+      font-size: 0.9rem;
+      line-height: 1.65;
+      margin-bottom: var(--space-lg);
+      position: relative;
+      z-index: 1;
+    }
+
+    .feature-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      position: relative;
+      z-index: 1;
+      transition: gap 0.3s ease;
+    }
+
+    .feature-card:hover .feature-link {
+      gap: 10px;
+    }
+
+    .feature-icon.amber+*+p+.feature-link {
+      color: var(--color-accent);
+    }
+
+    /* ---- CTA Section ---- */
+    .cta-section {
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .cta-bg {
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 50% 50%, rgba(74, 222, 128, 0.08) 0%, transparent 70%);
+      pointer-events: none;
+    }
+
+    .cta-section h2 {
+      margin-bottom: var(--space-md);
+    }
+
+    .cta-section p {
+      max-width: 480px;
+      margin: 0 auto var(--space-2xl);
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: var(--space-md);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" id="main-nav" aria-label="Ana Navigasyon">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">i<span>z</span>im</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="karbon.html">Karbon Hesaplayıcı</a></li>
+        <li><a href="harita.html">İklim Haritası</a></li>
+        <li><a href="senaryo.html" class="nav-cta">2050 Oyunu →</a></li>
+      </ul>
+      <button class="nav-burger" aria-label="Menü aç/kapat" id="nav-burger">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Mobile Menu -->
+  <nav class="nav-mobile" id="nav-mobile" aria-label="Mobil Menü">
+    <a href="index.html">Ana Sayfa</a>
+    <a href="karbon.html">Karbon Hesaplayıcı</a>
+    <a href="harita.html">İklim Haritası</a>
+    <a href="senaryo.html">2050 Senaryo Oyunu</a>
+  </nav>
+
+  <main>
+    <!-- ================================================================
+         HERO
+         ================================================================ -->
+    <section class="hero" aria-label="Ana Başlık">
+      <div class="hero-bg"></div>
+      <canvas id="particles-canvas"></canvas>
+
+      <div class="container"
+        style="display:flex; align-items:center; justify-content:space-between; position:relative; z-index:2; width:100%;">
+        <div class="hero-content">
+          <h1>
+            Dünyamız<br>
+            <span class="line-accent">değişiyor.</span><br>
+            <span class="line-warm">İzimizi</span> bırakıyoruz.
+          </h1>
+
+          <p class="hero-desc">
+            Karbon ayak izini hesapla, küresel iklim verilerini keşfet ve
+            kişisel seçimlerinin 2050 dünyasını nasıl şekillendireceğini gör.
+          </p>
+
+          <div class="hero-actions">
+            <a href="karbon.html" class="btn btn-primary btn-lg">
+              Karbon Testini Başlat
+            </a>
+            <a href="senaryo.html" class="btn btn-ghost btn-lg">
+              2050 Oyununa Geç →
+            </a>
+          </div>
+        </div>
+
+        <div class="hero-badge" aria-hidden="true">
+          <div class="hero-badge-ring-2"></div>
+          <div class="hero-badge-ring"></div>
+          <div class="hero-badge-circle">🌍</div>
+        </div>
+      </div>
+
+      <!-- Scroll indicator -->
+      <div
+        style="position:absolute; bottom:40px; left:50%; transform:translateX(-50%); display:flex; flex-direction:column; align-items:center; gap:8px; z-index:2; animation: float 2s ease-in-out infinite;">
+        <span
+          style="font-size:0.72rem; letter-spacing:0.1em; text-transform:uppercase; color:var(--color-text-muted);">Keşfet</span>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-muted)" stroke-width="2"
+          stroke-linecap="round">
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         STATS STRIP
+         ================================================================ -->
+    <section class="stats-strip" aria-label="Küresel İklim İstatistikleri">
+      <div class="container">
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="num amber" data-counter="1.2" data-suffix="°C" data-decimals="1" id="counter-temp">1.2°C</div>
+            <div class="stat-desc">Küresel sıcaklık artışı</div>
+            <div class="stat-sub">Sanayi öncesine kıyasla (2024)</div>
+          </div>
+          <div class="stat-item">
+            <div class="num red" data-counter="424" data-suffix=" ppm" id="counter-co2">424 ppm</div>
+            <div class="stat-desc">Atmosferdeki CO₂</div>
+            <div class="stat-sub">Son 3 milyon yılın en yüksek değeri</div>
+          </div>
+          <div class="stat-item">
+            <div class="num green" data-counter="4.7" data-suffix=" ton" data-decimals="1" id="counter-avg">4.7 ton
+            </div>
+            <div class="stat-desc">Dünya ortalaması CO₂/kişi</div>
+            <div class="stat-sub">Yıllık karbondioksit salınımı</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         ABOUT
+         ================================================================ -->
+    <section class="section" aria-label="İklim Değişikliği Hakkında">
+      <div class="container">
+        <div class="about-grid">
+          <div>
+            <div class="section-header reveal">
+              <span class="label">Neden Önemli?</span>
+              <div class="divider"></div>
+              <h2>İklim değişikliği nedir?</h2>
+              <p>
+                İklim değişikliği, Sanayi Devrimi'nden bu yana insan faaliyetleri sonucu atmosfere
+                salınan sera gazlarının neden olduğu uzun vadeli sıcaklık ve iklim örüntülerindeki
+                köklü değişikliklerdir.
+              </p>
+            </div>
+
+            <div class="about-facts">
+              <div class="about-fact reveal reveal-delay-1">
+                <div class="about-fact-icon">🔥</div>
+                <div class="about-fact-text">
+                  <strong>Artan Sıcaklıklar</strong>
+                  <span>Son 10 yıl, kayıt tarihinin en sıcak on yılı olarak belgelendi.</span>
+                </div>
+              </div>
+              <div class="about-fact reveal reveal-delay-2">
+                <div class="about-fact-icon">🧊</div>
+                <div class="about-fact-text">
+                  <strong>Eriyen Buzullar</strong>
+                  <span>Arktik deniz buzu, her on yılda yaklaşık %13 oranında azalmaktadır.</span>
+                </div>
+              </div>
+              <div class="about-fact reveal reveal-delay-3">
+                <div class="about-fact-icon">🌊</div>
+                <div class="about-fact-text">
+                  <strong>Yükselen Deniz Seviyeleri</strong>
+                  <span>1993'ten bu yana deniz seviyeleri ortalama 10 cm yükseldi.</span>
+                </div>
+              </div>
+              <div class="about-fact reveal reveal-delay-4">
+                <div class="about-fact-icon">⛅</div>
+                <div class="about-fact-text">
+                  <strong>Aşırı Hava Olayları</strong>
+                  <span>Seller, kuraklıklar ve aşırı fırtınalar giderek daha sık yaşanıyor.</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="about-visual reveal reveal-delay-2">
+            <div class="temp-chart-preview">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                <span style="font-size:0.82rem; font-weight:600; color:var(--color-text-primary);">Küresel Sıcaklık
+                  Anomalisi</span>
+                <span class="badge badge-amber">1960–2024</span>
+              </div>
+              <p style="font-size:0.78rem; color:var(--color-text-muted); margin-bottom:12px;">Sanayi öncesi ortalamaya
+                göre fark (°C)</p>
+              <div class="temp-bars" id="temp-bars">
+                <!-- Filled by JS -->
+              </div>
+              <div style="height:20px;"></div>
+              <p style="font-size:0.72rem; color:var(--color-text-muted); text-align:center;">Kaynak: NASA GISS Yüzey
+                Sıcaklığı Analizi</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         FEATURE CARDS
+         ================================================================ -->
+    <section class="section features-bg" aria-label="Araçlar">
+      <div class="container">
+        <div class="section-header centered reveal">
+          <span class="label">Araçlar &amp; Modüller</span>
+          <div class="divider centered"></div>
+          <h2>İklim değişikliğini<br>üç farklı perspektiften gör</h2>
+          <p>
+            Kişisel karbon ayak izini hesapla, küresel iklim verilerini harita üzerinde incele
+            ve gelecek senaryolarını deneyimle.
+          </p>
+        </div>
+
+        <div class="grid-3">
+          <a href="karbon.html" class="feature-card reveal reveal-delay-1" id="feature-karbon">
+            <span class="feature-num">01</span>
+            <div class="feature-icon green">🌿</div>
+            <h3>Karbon Ayak İzi Hesaplayıcı</h3>
+            <p>
+              8 soruluk test ile yıllık karbon salınımını öğren. Dünya ortalamasıyla
+              kıyasla ve kişiselleştirilmiş öneriler al.
+            </p>
+            <span class="feature-link">Testi Başlat →</span>
+          </a>
+
+          <a href="harita.html" class="feature-card reveal reveal-delay-2" id="feature-harita">
+            <span class="feature-num" style="color:var(--color-accent);">02</span>
+            <div class="feature-icon amber">🗺️</div>
+            <h3>Küresel İklim Haritası</h3>
+            <p>
+              Dünya haritasında bir ülkeye tıkla — sıcaklık trendi, yağış verileri
+              ve kişi başı karbon salınımı grafiklerini gör.
+            </p>
+            <span class="feature-link" style="color:var(--color-accent);">Haritayı Keşfet →</span>
+          </a>
+
+          <a href="senaryo.html" class="feature-card reveal reveal-delay-3" id="feature-senaryo">
+            <span class="feature-num" style="color:#38bdf8;">03</span>
+            <div class="feature-icon sky">🎮</div>
+            <h3>2050 Senaryo Oyunu</h3>
+            <p>
+              Enerji, ulaşım, beslenme ve tüketim kararları ver. Seçimlerin
+              2050'deki iklim senaryosunu belirlesin.
+            </p>
+            <span class="feature-link" style="color:#38bdf8;">Oyuna Başla →</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================
+         CTA
+         ================================================================ -->
+    <section class="section cta-section" aria-label="Hemen Başla">
+      <div class="cta-bg"></div>
+      <div class="container" style="position:relative; z-index:1;">
+        <div class="reveal">
+          <span class="label">Harekete Geç</span>
+          <div class="divider centered"></div>
+          <h2>Başlamak için<br>ne bekliyorsun?</h2>
+          <p>
+            Her birey fark yaratabilir. İklim krizinin ne kadar acil olduğunu anlamak
+            için karbon testini hemen yap.
+          </p>
+          <div class="cta-buttons">
+            <a href="karbon.html" class="btn btn-primary btn-lg">Karbon Testini Başlat 🌿</a>
+            <a href="senaryo.html" class="btn btn-secondary btn-lg">2050 Senaryosunu Oyna 🎮</a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">izim</div>
+        <ul class="footer-links">
+          <li><a href="index.html">Ana Sayfa</a></li>
+          <li><a href="karbon.html">Karbon Hesaplayıcı</a></li>
+          <li><a href="harita.html">İklim Haritası</a></li>
+          <li><a href="senaryo.html">2050 Oyunu</a></li>
+        </ul>
+        <p class="footer-copy">
+          Biyoloji dersi iklim değişikliği projesi. Veriler: NASA GISS, Our World in Data, World Bank.
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+  <script defer>
+    // ---- Particle canvas ----
+    const canvas = document.getElementById('particles-canvas');
+    const ctx = canvas.getContext('2d');
+    let particles = [];
+    const PARTICLE_COUNT = 60;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
+    }
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    for (let i = 0; i < PARTICLE_COUNT; i++) {
+      particles.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        r: Math.random() * 1.5 + 0.3,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.3,
+        alpha: Math.random() * 0.6 + 0.2
+      });
+    }
+
+    function animateParticles() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      particles.forEach(p => {
+        p.x += p.vx; p.y += p.vy;
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+        if (p.y < 0) p.y = canvas.height;
+        if (p.y > canvas.height) p.y = 0;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(74, 222, 128, ${p.alpha})`;
+        ctx.fill();
+      });
+      requestAnimationFrame(animateParticles);
+    }
+    animateParticles();
+
+    // ---- Temperature bar chart (preview) ----
+    const tempData = [
+      { year: '1960', val: 0.0 }, { year: '1970', val: 0.02 },
+      { year: '1980', val: 0.27 }, { year: '1990', val: 0.45 },
+      { year: '2000', val: 0.42 }, { year: '2010', val: 0.72 },
+      { year: '2015', val: 0.90 }, { year: '2020', val: 1.02 },
+      { year: '2023', val: 1.17 }, { year: '2024', val: 1.29 }
+    ];
+    const maxVal = 1.5;
+    const barsEl = document.getElementById('temp-bars');
+    if (barsEl) {
+      barsEl.innerHTML = tempData.map(d => {
+        const pct = (d.val / maxVal) * 100;
+        const hue = Math.round(120 - (d.val / 1.5) * 120);
+        return `<div class="temp-bar" style="height:${pct}%; background: hsl(${hue}, 70%, 50%); opacity:0.8;">
+          <span class="temp-bar-label">${d.year}</span>
+        </div>`;
+      }).join('');
+    }
+  </script>
+</body>
+
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karbon Ayak İzi Hesaplayıcı — izim</title>
+  <meta name="description" content="8 soruluk interaktif test ile yıllık karbon ayak izini hesapla, dünya ortalamasıyla karşılaştır ve kişiselleştirilmiş öneriler al.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    /* ---- Page layout ---- */
+    .karbon-page {
+      min-height: 100vh;
+      padding-top: var(--nav-height);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .karbon-page::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse at 10% 30%, rgba(74, 222, 128, 0.07) 0%, transparent 50%),
+        radial-gradient(ellipse at 90% 70%, rgba(245, 158, 11, 0.05) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .karbon-inner {
+      max-width: 680px;
+      margin: 0 auto;
+      padding: var(--space-3xl) var(--space-lg);
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ---- Intro screen ---- */
+    #screen-intro {
+      text-align: center;
+      padding: var(--space-3xl) 0;
+    }
+
+    #screen-intro .intro-icon {
+      font-size: 5rem;
+      margin-bottom: var(--space-xl);
+      animation: float 4s ease-in-out infinite;
+      display: block;
+    }
+
+    #screen-intro h1 {
+      font-size: clamp(2rem, 4vw + 0.5rem, 3rem);
+      margin-bottom: var(--space-md);
+    }
+
+    #screen-intro p {
+      max-width: 480px;
+      margin: 0 auto var(--space-2xl);
+    }
+
+    .intro-info-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: var(--space-md);
+      margin-bottom: var(--space-2xl);
+      text-align: left;
+    }
+
+    .intro-info-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: var(--space-md);
+    }
+
+    .intro-info-card .iic-num {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      font-weight: 900;
+      color: var(--color-primary);
+      line-height: 1;
+      margin-bottom: 4px;
+    }
+
+    .intro-info-card .iic-label {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+    }
+
+    @media (max-width: 540px) {
+      .intro-info-cards { grid-template-columns: 1fr; }
+    }
+
+    /* ---- Quiz screen ---- */
+    #screen-quiz { display: none; }
+
+    .quiz-top {
+      margin-bottom: var(--space-2xl);
+    }
+
+    .quiz-progress-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: var(--space-sm);
+    }
+
+    .quiz-step-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--color-text-muted);
+      letter-spacing: 0.05em;
+    }
+
+    .quiz-progress-track {
+      height: 5px;
+      background: var(--color-surface-2);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    #quiz-progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--color-primary-dark), var(--color-primary));
+      border-radius: var(--radius-full);
+      transition: width 0.5s var(--ease-out-expo);
+    }
+
+    /* Question card */
+    .question-card {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-xl);
+      padding: var(--space-2xl);
+      animation: scaleIn 0.4s var(--ease-out-expo) forwards;
+    }
+
+    .q-category {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--color-primary);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: var(--space-md);
+      background: rgba(74, 222, 128, 0.08);
+      border: 1px solid rgba(74, 222, 128, 0.18);
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+    }
+
+    .q-text {
+      font-family: var(--font-display);
+      font-size: clamp(1.1rem, 2vw + 0.3rem, 1.5rem);
+      font-weight: 700;
+      color: var(--color-text-primary);
+      line-height: 1.35;
+      margin-bottom: var(--space-xl);
+    }
+
+    .q-sub {
+      font-size: 0.85rem;
+      color: var(--color-text-muted);
+      margin-top: -var(--space-md);
+      margin-bottom: var(--space-xl);
+    }
+
+    /* Answer options */
+    .answers {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+    }
+
+    .answer-btn {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      padding: 16px 20px;
+      background: var(--color-surface-2);
+      border: 1.5px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      cursor: pointer;
+      transition: all 0.25s var(--ease-out-expo);
+      text-align: left;
+      width: 100%;
+    }
+
+    .answer-btn:hover {
+      border-color: var(--color-primary);
+      background: rgba(74, 222, 128, 0.06);
+      transform: translateX(4px);
+    }
+
+    .answer-btn.selected {
+      border-color: var(--color-primary);
+      background: rgba(74, 222, 128, 0.1);
+    }
+
+    .answer-icon {
+      font-size: 1.5rem;
+      flex-shrink: 0;
+      width: 40px;
+      text-align: center;
+    }
+
+    .answer-text strong {
+      display: block;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 2px;
+    }
+
+    .answer-text span {
+      font-size: 0.8rem;
+      color: var(--color-text-muted);
+    }
+
+    /* Feedback panel (after each answer) */
+    #feedback-panel {
+      display: none;
+      margin-top: var(--space-lg);
+      padding: var(--space-lg);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border-strong);
+      background: var(--color-surface-2);
+      animation: fadeInUp 0.4s var(--ease-out-expo) forwards;
+    }
+
+    #feedback-panel .feedback-impact {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    #feedback-panel .feedback-impact .impact-val {
+      font-family: var(--font-display);
+      font-size: 1.4rem;
+      font-weight: 900;
+    }
+
+    .impact-high { color: #f87171; }
+    .impact-med  { color: var(--color-accent); }
+    .impact-low  { color: var(--color-primary); }
+
+    #feedback-text {
+      font-size: 0.88rem;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    .next-btn-wrap {
+      margin-top: var(--space-lg);
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    /* ---- Result screen ---- */
+    #screen-result { display: none; }
+
+    .result-header {
+      text-align: center;
+      margin-bottom: var(--space-2xl);
+    }
+
+    .result-co2-ring {
+      width: 180px; height: 180px;
+      border-radius: 50%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto var(--space-xl);
+      border: 3px solid var(--color-primary);
+      box-shadow: 0 0 40px rgba(74, 222, 128, 0.2), inset 0 0 40px rgba(74, 222, 128, 0.05);
+      background: var(--color-surface);
+      animation: pulse-glow 3s ease infinite;
+    }
+
+    .result-co2-num {
+      font-family: var(--font-display);
+      font-size: 2.8rem;
+      font-weight: 900;
+      line-height: 1;
+      color: var(--color-primary);
+    }
+
+    .result-co2-unit {
+      font-size: 0.78rem;
+      color: var(--color-text-secondary);
+      margin-top: 4px;
+    }
+
+    .result-verdict {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 24px;
+      border-radius: var(--radius-full);
+      font-size: 1rem;
+      font-weight: 700;
+      margin-bottom: var(--space-lg);
+    }
+
+    .verdict-low {
+      background: rgba(74, 222, 128, 0.12);
+      color: var(--color-primary);
+      border: 1.5px solid rgba(74, 222, 128, 0.3);
+    }
+
+    .verdict-avg {
+      background: rgba(245, 158, 11, 0.12);
+      color: var(--color-accent);
+      border: 1.5px solid rgba(245, 158, 11, 0.3);
+    }
+
+    .verdict-high {
+      background: rgba(239, 68, 68, 0.12);
+      color: #f87171;
+      border: 1.5px solid rgba(239, 68, 68, 0.3);
+    }
+
+    /* Comparison bar */
+    .comparison-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      margin-bottom: var(--space-xl);
+    }
+
+    .comparison-bars {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+
+    .comp-bar-row {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+    }
+
+    .comp-bar-label {
+      width: 110px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      flex-shrink: 0;
+    }
+
+    .comp-bar-track {
+      flex: 1;
+      height: 12px;
+      background: var(--color-surface-2);
+      border-radius: var(--radius-full);
+      overflow: hidden;
+    }
+
+    .comp-bar-fill {
+      height: 100%;
+      border-radius: var(--radius-full);
+      transition: width 1.2s var(--ease-out-expo);
+    }
+
+    .comp-bar-val {
+      width: 60px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      text-align: right;
+      flex-shrink: 0;
+    }
+
+    /* Recommendations */
+    .recs-section {
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: var(--space-xl);
+      margin-bottom: var(--space-xl);
+    }
+
+    .recs-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-md);
+      margin-top: var(--space-lg);
+    }
+
+    .recs-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: var(--space-md);
+      font-size: 0.9rem;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    .recs-list li .rec-icon {
+      width: 28px; height: 28px;
+      background: rgba(74, 222, 128, 0.1);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: var(--space-md);
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" id="main-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">i<span>z</span>im</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="karbon.html" class="active">Karbon Hesaplayıcı</a></li>
+        <li><a href="harita.html">İklim Haritası</a></li>
+        <li><a href="senaryo.html" class="nav-cta">2050 Oyunu →</a></li>
+      </ul>
+      <button class="nav-burger" id="nav-burger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  <nav class="nav-mobile" id="nav-mobile">
+    <a href="index.html">Ana Sayfa</a>
+    <a href="karbon.html">Karbon Hesaplayıcı</a>
+    <a href="harita.html">İklim Haritası</a>
+    <a href="senaryo.html">2050 Oyunu</a>
+  </nav>
+
+  <main class="karbon-page">
+    <div class="karbon-inner">
+
+      <!-- ============================================================
+           INTRO SCREEN
+           ============================================================ -->
+      <div id="screen-intro">
+        <span class="intro-icon" aria-hidden="true">🌿</span>
+        <span class="label">Karbon Hesaplayıcı</span>
+        <h1>Karbon Ayak İzini Ölç</h1>
+        <p>
+          Günlük alışkanlıklarına dair 8 soruyu yanıtla. Yıllık CO₂ salınımını hesapla
+          ve dünya ortalamasıyla karşılaştır.
+        </p>
+
+        <div class="intro-info-cards">
+          <div class="intro-info-card">
+            <div class="iic-num">8</div>
+            <div class="iic-label">Soru</div>
+          </div>
+          <div class="intro-info-card">
+            <div class="iic-num">~3'</div>
+            <div class="iic-label">Süre</div>
+          </div>
+          <div class="intro-info-card">
+            <div class="iic-num">4.7t</div>
+            <div class="iic-label">Dünya ortalaması CO₂/yıl</div>
+          </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg" id="start-quiz-btn">
+          Testi Başlat 🌿
+        </button>
+      </div>
+
+      <!-- ============================================================
+           QUIZ SCREEN
+           ============================================================ -->
+      <div id="screen-quiz">
+        <div class="quiz-top">
+          <div class="quiz-progress-row">
+            <span class="quiz-step-label" id="step-label">Soru 1 / 8</span>
+            <span class="quiz-step-label" id="score-label">0 kg CO₂</span>
+          </div>
+          <div class="quiz-progress-track">
+            <div id="quiz-progress-fill" style="width:0%"></div>
+          </div>
+        </div>
+
+        <div class="question-card" id="question-card">
+          <div class="q-category" id="q-category">Kategori</div>
+          <div class="q-text" id="q-text">Soru yükleniyor…</div>
+          <div class="q-sub" id="q-sub"></div>
+          <div class="answers" id="answers-container"></div>
+
+          <div id="feedback-panel">
+            <div class="feedback-impact">
+              <span class="impact-val" id="feedback-impact-val">+0</span>
+              <span style="font-size:0.82rem; color:var(--color-text-secondary);">kg CO₂/yıl bu tercihten</span>
+            </div>
+            <p id="feedback-text">Geri bildirim yükleniyor…</p>
+          </div>
+
+          <div class="next-btn-wrap" id="next-btn-wrap" style="display:none">
+            <button class="btn btn-primary" id="next-btn">Sonraki Soru →</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================================
+           RESULT SCREEN
+           ============================================================ -->
+      <div id="screen-result">
+        <div class="result-header">
+          <span class="label">Sonuçların</span>
+          <h1 style="margin:var(--space-md) 0;">Yıllık Karbon<br>Salınımın</h1>
+
+          <div class="result-co2-ring">
+            <div class="result-co2-num" id="result-num">0</div>
+            <div class="result-co2-unit">ton CO₂ / yıl</div>
+          </div>
+
+          <div class="result-verdict" id="result-verdict">Hesaplanıyor…</div>
+          <p id="result-desc" style="max-width:460px; margin:0 auto;"></p>
+        </div>
+
+        <!-- Comparison -->
+        <div class="comparison-section reveal">
+          <h3 style="margin-bottom:4px;">Karşılaştırma</h3>
+          <p style="font-size:0.85rem; margin-bottom:0;">Kişi başı yıllık CO₂ salınımı</p>
+          <div class="comparison-bars">
+            <div class="comp-bar-row">
+              <span class="comp-bar-label">Sen</span>
+              <div class="comp-bar-track">
+                <div class="comp-bar-fill" id="bar-you" style="width:0%; background:var(--color-primary);"></div>
+              </div>
+              <span class="comp-bar-val" id="bar-you-val" style="color:var(--color-primary);">—</span>
+            </div>
+            <div class="comp-bar-row">
+              <span class="comp-bar-label">Türkiye</span>
+              <div class="comp-bar-track">
+                <div class="comp-bar-fill" style="width:35%; background:var(--color-accent);"></div>
+              </div>
+              <span class="comp-bar-val" style="color:var(--color-accent);">5.9t</span>
+            </div>
+            <div class="comp-bar-row">
+              <span class="comp-bar-label">Dünya Ort.</span>
+              <div class="comp-bar-track">
+                <div class="comp-bar-fill" style="width:29%; background:#86a893;"></div>
+              </div>
+              <span class="comp-bar-val" style="color:#86a893;">4.7t</span>
+            </div>
+            <div class="comp-bar-row">
+              <span class="comp-bar-label">ABD</span>
+              <div class="comp-bar-track">
+                <div class="comp-bar-fill" style="width:93%; background:#f87171;"></div>
+              </div>
+              <span class="comp-bar-val" style="color:#f87171;">14.9t</span>
+            </div>
+            <div class="comp-bar-row">
+              <span class="comp-bar-label">Hindistan</span>
+              <div class="comp-bar-track">
+                <div class="comp-bar-fill" style="width:12%; background:var(--color-primary);"></div>
+              </div>
+              <span class="comp-bar-val" style="color:var(--color-primary);">1.9t</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="recs-section reveal reveal-delay-2">
+          <h3 style="margin-bottom:4px;">Kişisel Öneriler</h3>
+          <p style="font-size:0.85rem; margin-bottom:0;">Karbon ayak izini azaltmak için</p>
+          <ul class="recs-list" id="recs-list"></ul>
+        </div>
+
+        <div class="result-actions">
+          <button class="btn btn-ghost" id="restart-btn">↩ Testi Yeniden Yap</button>
+          <a href="senaryo.html" class="btn btn-primary">2050 Oyununa Geç 🎮</a>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">izim</div>
+        <ul class="footer-links">
+          <li><a href="index.html">Ana Sayfa</a></li>
+          <li><a href="harita.html">İklim Haritası</a></li>
+          <li><a href="senaryo.html">2050 Oyunu</a></li>
+        </ul>
+        <p class="footer-copy">Hesaplama metodolojisi: CoolClimate Network, Berkeley.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/main.js" defer></script>
+  <script src="js/karbon.js" defer></script>
+</body>
+</html>

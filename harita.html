@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Küresel İklim Haritası — izim</title>
+  <meta name="description" content="Dünya iklim haritası: ülkelere tıkla, sıcaklık trendi, yağış ve karbon ayak izi verilerini gör.">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🗺️</text></svg>">
+  <link rel="stylesheet" href="css/style.css">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- D3.js for map -->
+  <script src="https://cdn.jsdelivr.net/npm/d3@7.9.0/dist/d3.min.js"></script>
+  <!-- TopoJSON -->
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/dist/topojson-client.min.js"></script>
+
+  <style>
+    .harita-page {
+      min-height: 100vh;
+      padding-top: var(--nav-height);
+    }
+
+    /* ---- Page header ---- */
+    .harita-header {
+      padding: var(--space-2xl) 0 var(--space-xl);
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-surface);
+    }
+
+    .harita-header-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: var(--space-xl);
+      flex-wrap: wrap;
+    }
+
+    /* Legend */
+    .map-legend {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      flex-wrap: wrap;
+    }
+
+    .legend-label {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+    }
+
+    .legend-scale {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .legend-bar {
+      width: 120px;
+      height: 10px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(to right, #22c55e, #f59e0b, #ef4444);
+    }
+
+    .legend-ticks {
+      display: flex;
+      justify-content: space-between;
+      width: 120px;
+      font-size: 0.68rem;
+      color: var(--color-text-muted);
+      margin-top: 2px;
+    }
+
+    /* Search bar */
+    .country-search {
+      position: relative;
+      flex: 1;
+      max-width: 280px;
+    }
+
+    .country-search input {
+      width: 100%;
+      padding: 10px 16px 10px 36px;
+      background: var(--color-bg);
+      border: 1.5px solid var(--color-border-strong);
+      border-radius: var(--radius-full);
+      color: var(--color-text-primary);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .country-search input:focus {
+      border-color: var(--color-primary);
+    }
+
+    .country-search input::placeholder {
+      color: var(--color-text-muted);
+    }
+
+    .search-icon {
+      position: absolute;
+      left: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--color-text-muted);
+      pointer-events: none;
+    }
+
+    .search-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0; right: 0;
+      background: var(--color-surface-2);
+      border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-md);
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+
+    .search-dropdown.open { display: block; }
+
+    .search-dropdown-item {
+      padding: 10px 16px;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: background 0.15s;
+      color: var(--color-text-primary);
+    }
+
+    .search-dropdown-item:hover {
+      background: rgba(74, 222, 128, 0.08);
+      color: var(--color-primary);
+    }
+
+    /* ---- Main layout ---- */
+    .harita-main {
+      display: grid;
+      grid-template-columns: 1fr 380px;
+      height: calc(100vh - var(--nav-height) - 112px);
+      overflow: hidden;
+    }
+
+    @media (max-width: 900px) {
+      .harita-main { grid-template-columns: 1fr; height: auto; }
+    }
+
+    /* ---- Map container ---- */
+    .map-container {
+      position: relative;
+      background: var(--color-bg);
+      overflow: hidden;
+      border-right: 1px solid var(--color-border);
+    }
+
+    #world-map {
+      width: 100%;
+      height: 100%;
+    }
+
+    .country-path {
+      stroke: rgba(74, 222, 128, 0.2);
+      stroke-width: 0.5;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+
+    .country-path:hover {
+      stroke: rgba(74, 222, 128, 0.7);
+      stroke-width: 1;
+    }
+
+    .country-path.selected {
+      stroke: var(--color-primary);
+      stroke-width: 1.5;
+    }
+
+    /* Map tooltip */
+    #map-tooltip {
+      position: absolute;
+      background: rgba(18, 37, 24, 0.95);
+      border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-md);
+      padding: 8px 14px;
+      font-size: 0.82rem;
+      color: var(--color-text-primary);
+      pointer-events: none;
+      display: none;
+      white-space: nowrap;
+      backdrop-filter: blur(8px);
+      z-index: 50;
+    }
+
+    /* Map controls */
+    .map-controls {
+      position: absolute;
+      bottom: var(--space-lg);
+      left: var(--space-lg);
+      display: flex;
+      gap: var(--space-sm);
+      z-index: 10;
+    }
+
+    .map-control-btn {
+      width: 34px; height: 34px;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border-strong);
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: var(--color-text-primary);
+    }
+
+    .map-control-btn:hover {
+      background: var(--color-surface-2);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+
+    /* Prompt when no country selected */
+    .map-prompt {
+      position: absolute;
+      bottom: var(--space-lg);
+      right: var(--space-lg);
+      background: rgba(18, 37, 24, 0.9);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-md);
+      padding: 10px 16px;
+      font-size: 0.8rem;
+      color: var(--color-text-secondary);
+      backdrop-filter: blur(8px);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    /* ---- Side panel ---- */
+    .side-panel {
+      background: var(--color-surface);
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    @media (max-width: 900px) {
+      .side-panel {
+        border-top: 1px solid var(--color-border);
+        min-height: 500px;
+      }
+    }
+
+    /* Empty state */
+    .panel-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      text-align: center;
+      padding: var(--space-2xl);
+      gap: var(--space-md);
+    }
+
+    .panel-empty .empty-icon {
+      font-size: 3rem;
+      opacity: 0.4;
+    }
+
+    .panel-empty p {
+      font-size: 0.88rem;
+      max-width: 260px;
+    }
+
+    /* Country header */
+    .panel-country-header {
+      padding: var(--space-xl);
+      border-bottom: 1px solid var(--color-border);
+      background: var(--color-surface-2);
+    }
+
+    .panel-country-name {
+      display: flex;
+      align-items: center;
+      gap: var(--space-md);
+      margin-bottom: var(--space-sm);
+    }
+
+    .panel-country-name .flag {
+      font-size: 2rem;
+    }
+
+    .panel-country-name h2 {
+      font-size: 1.4rem;
+      margin: 0;
+    }
+
+    .panel-country-badges {
+      display: flex;
+      gap: var(--space-sm);
+      flex-wrap: wrap;
+    }
+
+    /* Chart sections */
+    .panel-chart-section {
+      padding: var(--space-lg);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .panel-chart-section:last-child {
+      border-bottom: none;
+    }
+
+    .chart-section-title {
+      display: flex;
+      align-items: center;
+      gap: var(--space-sm);
+      margin-bottom: var(--space-sm);
+    }
+
+    .chart-section-title .icon {
+      width: 28px; height: 28px;
+      border-radius: 6px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .chart-section-title h4 {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .chart-section-title p {
+      font-size: 0.75rem;
+      color: var(--color-text-muted);
+      margin: 0;
+    }
+
+    .chart-canvas-wrap {
+      position: relative;
+      height: 160px;
+    }
+
+    /* Stats row under each chart */
+    .chart-stat-row {
+      display: flex;
+      gap: var(--space-md);
+      margin-top: var(--space-sm);
+    }
+
+    .chart-stat {
+      flex: 1;
+      text-align: center;
+      background: var(--color-bg);
+      border-radius: var(--radius-sm);
+      padding: 8px;
+    }
+
+    .chart-stat .val {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .chart-stat .lbl {
+      font-size: 0.68rem;
+      color: var(--color-text-muted);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="nav" id="main-nav">
+    <div class="nav-inner">
+      <a href="index.html" class="nav-logo">i<span>z</span>im</a>
+      <ul class="nav-links">
+        <li><a href="index.html">Ana Sayfa</a></li>
+        <li><a href="karbon.html">Karbon Hesaplayıcı</a></li>
+        <li><a href="harita.html" class="active">İklim Haritası</a></li>
+        <li><a href="senaryo.html" class="nav-cta">2050 Oyunu →</a></li>
+      </ul>
+      <button class="nav-burger" id="nav-burger" aria-label="Menü">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </nav>
+  <nav class="nav-mobile" id="nav-mobile">
+    <a href="index.html">Ana Sayfa</a>
+    <a href="karbon.html">Karbon Hesaplayıcı</a>
+    <a href="harita.html">İklim Haritası</a>
+    <a href="senaryo.html">2050 Oyunu</a>
+  </nav>
+
+  <main class="harita-page">
+
+    <!-- Header -->
+    <div class="harita-header">
+      <div class="container">
+        <div class="harita-header-inner">
+          <div>
+            <span class="label">Küresel İklim Haritası</span>
+            <h1 style="font-size:clamp(1.4rem, 2vw+0.5rem, 2rem); margin-top:4px;">
+              Bir ülkeye tıkla, iklim verilerini gör
+            </h1>
+          </div>
+
+          <div class="map-legend">
+            <span class="legend-label">CO₂/kişi:</span>
+            <div>
+              <div class="legend-scale">
+                <span class="legend-label" style="font-size:0.65rem;">Az</span>
+                <div class="legend-bar"></div>
+                <span class="legend-label" style="font-size:0.65rem;">Çok</span>
+              </div>
+              <div class="legend-ticks">
+                <span>0t</span><span>8t</span><span>16t+</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="country-search">
+            <svg class="search-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+            <input type="text" id="country-search-input" placeholder="Ülke ara…" autocomplete="off">
+            <div class="search-dropdown" id="search-dropdown"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Map + Panel -->
+    <div class="harita-main">
+
+      <!-- MAP -->
+      <div class="map-container" role="region" aria-label="Dünya İklim Haritası">
+        <svg id="world-map" aria-label="Tıklanabilir dünya haritası"></svg>
+
+        <div id="map-tooltip" role="tooltip"></div>
+
+        <div class="map-controls">
+          <button class="map-control-btn" id="zoom-in-btn" aria-label="Yaklaştır" title="Yaklaştır">+</button>
+          <button class="map-control-btn" id="zoom-out-btn" aria-label="Uzaklaştır" title="Uzaklaştır">−</button>
+          <button class="map-control-btn" id="reset-btn" aria-label="Sıfırla" title="Sıfırla">⌂</button>
+        </div>
+
+        <div class="map-prompt" id="map-prompt">
+          👆 Bir ülkeye tıkla
+        </div>
+      </div>
+
+      <!-- SIDE PANEL -->
+      <aside class="side-panel" id="side-panel" aria-label="Ülke İklim Verileri">
+        <div class="panel-empty" id="panel-empty">
+          <span class="empty-icon">🗺️</span>
+          <h3 style="font-size:1rem;">Ülke Seçilmedi</h3>
+          <p>Haritada bir ülkeye tıkla — sıcaklık trendi, yağış verileri ve karbon ayak izi grafiklerini gör.</p>
+        </div>
+
+        <div id="panel-content" style="display:none;">
+          <!-- Filled by JS -->
+        </div>
+      </aside>
+    </div>
+
+  </main>
+  <!-- DATA SOURCES -->
+  <section style="background:var(--color-surface);border-top:1px solid var(--color-border);padding:var(--space-xl) 0;">
+    <div class="container">
+      <div style="display:flex;align-items:flex-start;gap:var(--space-2xl);flex-wrap:wrap;">
+        <div style="flex:1;min-width:260px;">
+          <h3 style="font-size:0.85rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:var(--space-md);">📚 Veri Kaynakları</h3>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:10px;">
+            <li style="font-size:0.82rem;color:var(--color-text-secondary);">🌡️ <strong>Sıcaklık Trendi:</strong> Berkeley Earth Surface Temperature (BEST) — <a href="https://berkeleyearth.org" target="_blank" style="color:var(--color-primary);">berkeleyearth.org</a></li>
+            <li style="font-size:0.82rem;color:var(--color-text-secondary);">🌧️ <strong>Yağış Verileri:</strong> NOAA Global Surface Summary (GSOD) — <a href="https://www.ncei.noaa.gov" target="_blank" style="color:var(--color-primary);">ncei.noaa.gov</a></li>
+            <li style="font-size:0.82rem;color:var(--color-text-secondary);">🏭 <strong>CO₂ Salınımı:</strong> Our World in Data / GCP 2023 — <a href="https://ourworldindata.org/co2-emissions" target="_blank" style="color:var(--color-primary);">ourworldindata.org</a></li>
+            <li style="font-size:0.82rem;color:var(--color-text-secondary);">🗺️ <strong>Harita Geometrisi:</strong> Natural Earth / world-atlas (D3 topojson)</li>
+          </ul>
+        </div>
+        <div style="flex:1;min-width:220px;">
+          <h3 style="font-size:0.85rem;font-weight:700;letter-spacing:0.05em;text-transform:uppercase;color:var(--color-text-secondary);margin-bottom:var(--space-md);">⚠️ Önemli Not</h3>
+          <p style="font-size:0.82rem;color:var(--color-text-secondary);line-height:1.65;">Bu haritadaki veriler <strong>eğitim amaçlı</strong> statik referans değerlerdir. Yıllar bazında ortalamalar alınmış ve yuvarlanmıştır. Hassas bilimsel analizler için yukarıdaki birincil kaynaklara başvurunuz. Haritada 57 ülkeye ait iklim verisi yer almaktadır; diğer ülkeler klik ile görüntülenemez.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script src="js/main.js" defer></script>
+  <script src="js/harita.js" defer></script>
+</body>
+</html>
