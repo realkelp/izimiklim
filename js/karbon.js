@@ -29,28 +29,28 @@ const questions = [
         icon: '🚌',
         label: 'Toplu Taşıma',
         desc: 'Otobüs, metro, tramvay',
-        score: 400,
+        score: 200,
         impact: 'low',
-        impactVal: 400,
-        feedback: 'İyi tercih! Toplu taşıma, özel araçlara kıyasla kişi başı emisyonu %75\'e kadar azaltabilir. Yılda yaklaşık 400 kg CO₂.'
+        impactVal: 200,
+        feedback: 'İyi tercih! Toplu taşıma, özel araçlara kıyasla kişi başı emisyonu %75\'e kadar azaltabilir. Yılda yaklaşık 200 kg CO₂.'
       },
       {
         icon: '🚗',
         label: 'Özel Araç (Dizel/Benzin)',
         desc: 'Her gün araç kullanıyorum',
-        score: 2100,
+        score: 600,
         impact: 'high',
-        impactVal: 2100,
-        feedback: 'Ortalama benzinli araç, yılda yaklaşık 2.1 ton CO₂ üretir. Toplu taşıma veya elektrikli araçlara geçmek bu değeri dramatik biçimde düşürür.'
+        impactVal: 600,
+        feedback: 'Ortalama benzinli araç, yılda yaklaşık 600 kg CO₂ üretir. Toplu taşıma veya elektrikli araçlara geçmek bu değeri dramatik biçimde düşürür.'
       },
       {
         icon: '⚡',
         label: 'Elektrikli Araç',
         desc: 'Elektrikli veya hibrit araç',
-        score: 700,
+        score: 250,
         impact: 'med',
-        impactVal: 700,
-        feedback: 'Elektrikli araçlar, petrol araçlara kıyasla salınımı büyük ölçüde azaltır. Ancak elektriğin kaynağına bağlı olarak ~700 kg CO₂/yıl oluşabilir.'
+        impactVal: 250,
+        feedback: 'Elektrikli araçlar, petrol araçlara kıyasla salınımı büyük ölçüde azaltır. Ancak elektriğin kaynağına bağlı olarak ~250 kg CO₂/yıl oluşabilir.'
       }
     ]
   },
@@ -73,28 +73,28 @@ const questions = [
         icon: '✈️',
         label: '1–2 kısa yolculuk',
         desc: 'Yurt içi veya komşu ülkeler',
-        score: 600,
+        score: 200,
         impact: 'med',
-        impactVal: 600,
-        feedback: 'İki kısa mesafe uçuşu yılda yaklaşık 600 kg CO₂ ekler. Tren alternatifini düşünmek bu değeri %80 azaltabilir.'
+        impactVal: 200,
+        feedback: 'İki kısa mesafe uçuşu yılda yaklaşık 200 kg CO₂ ekler. Tren alternatifini düşünmek bu değeri %80 azaltabilir.'
       },
       {
         icon: '🌍',
         label: '3–5 uçuş (karma)',
         desc: 'Yurt içi + uluslararası',
-        score: 1800,
+        score: 750,
         impact: 'high',
-        impactVal: 1800,
-        feedback: 'Yılda 3–5 uçuş, ulaşım karbon bütçenin büyük bölümünü oluşturur. Toplam ~1.8 ton CO₂ — bu tek başına dünya ortalamasının %38\'i.'
+        impactVal: 750,
+        feedback: 'Yılda 3–5 uçuş, ulaşım karbon bütçenin büyük bölümünü oluşturur. Toplam ~750 kg CO₂ — bu tek başına karbon ayak izine önemli bir etki yapar.'
       },
       {
         icon: '🌏',
         label: '5\'ten fazla uçuş',
         desc: 'Sık seyahat ediyorum',
-        score: 4000,
+        score: 2000,
         impact: 'high',
-        impactVal: 4000,
-        feedback: 'Sık uçuş, bireysel karbon ayak izinin en büyük kalemlerinden biri. Yılda 4+ ton CO₂ sadece uçuşlardan gelebilir.'
+        impactVal: 2000,
+        feedback: 'Sık uçuş, bireysel karbon ayak izinin en büyük kalemlerinden biri. Yılda 2 ton CO₂ sadece uçuşlardan gelebilir.'
       }
     ]
   },
@@ -513,6 +513,10 @@ function selectAnswer(index) {
   });
 
   // Store answer
+  const prevAnswer = userAnswers[q.id];
+  if (prevAnswer) {
+    totalScore -= prevAnswer.score;
+  }
   userAnswers[q.id] = { index, score: a.score, impact: a.impact };
   totalScore += a.score;
 
