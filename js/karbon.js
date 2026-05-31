@@ -117,18 +117,18 @@ const questions = [
         icon: '🥦',
         label: 'Vejetaryen',
         desc: 'Et yemiyorum',
-        score: 900,
+        score: 1000,
         impact: 'low',
-        impactVal: 900,
-        feedback: 'Vejetaryen beslenme, et tüketimine kıyasla gıda kaynaklı salınımı ~%50 azaltır. Yılda ~900 kg CO₂.'
+        impactVal: 1000,
+        feedback: 'Vejetaryen beslenme, et tüketimine kıyasla gıda kaynaklı salınımı ~%50 azaltır. Yılda ~1000 kg CO₂.'
       },
       {
         icon: '🍗',
         label: 'Az et (ağırlıklı tavuk/balık)',
         desc: 'Haftada 2–3 kez et',
-        score: 1500,
+        score: 1700,
         impact: 'med',
-        impactVal: 1500,
+        impactVal: 1700,
         feedback: 'Beyaz et ve balık, kırmızı ete göre çok daha düşük emisyona sahip. Dengeli bir diyet için iyi bir seçenek. ~1.5 ton CO₂/yıl.'
       },
       {
@@ -152,9 +152,9 @@ const questions = [
         icon: '☀️',
         label: '%100 Yenilenebilir',
         desc: 'Güneş, rüzgar, hidroelektrik',
-        score: 100,
+        score: 50,
         impact: 'low',
-        impactVal: 100,
+        impactVal: 50,
         feedback: 'Mükemmel! Yenilenebilir enerji neredeyse sıfır operasyonel karbon üretir. Türkiye\'deki ortalama yeşil tarifeler ~100 kg CO₂/yıl.'
       },
       {
@@ -196,37 +196,37 @@ const questions = [
         icon: '♻️',
         label: 'Minimal / İkinci el',
         desc: 'Nadiren alıyorum, çoğu ikinci el',
-        score: 200,
+        score: 20,
         impact: 'low',
-        impactVal: 200,
+        impactVal: 20,
         feedback: 'İkinci el alışveriş ve minimal tüketim mükemmel bir tercih. Yeni bir gömlek üretmek ortalama 3 kg CO₂ oluşturur — ikinci el sıfıra yakındır.'
       },
       {
         icon: '🌿',
         label: 'Sürdürülebilir markalar',
         desc: 'Kaliteli, uzun ömürlü ürünler',
-        score: 600,
+        score: 150,
         impact: 'low',
-        impactVal: 600,
+        impactVal: 150,
         feedback: 'Sürdürülebilir tercihler doğru yönde bir adım. Az sayıda, kaliteli ürün almak fast fashion\'a kıyasla ~%60 daha az emisyon üretir.'
       },
       {
         icon: '🛒',
         label: 'Ortalama tüketici',
         desc: 'Ayda birkaç yeni ürün',
-        score: 1200,
+        score: 500,
         impact: 'med',
-        impactVal: 1200,
+        impactVal: 500,
         feedback: 'Ortalama bir tüketicinin yıllık alışveriş kaynaklı karbon ayak izi yaklaşık 1.2 ton CO₂. Daha az ve daha uzun ömürlü almak fark yaratır.'
       },
       {
         icon: '👗',
         label: 'Fast fashion / Çok alışveriş',
         desc: 'Sık sık yeni kıyafet ve ürün',
-        score: 2500,
+        score: 1000,
         impact: 'high',
-        impactVal: 2500,
-        feedback: 'Fast fashion, hem karbon hem su kullanımı açısından en yüksek etkili tüketim biçimlerinden biri. Yılda ~2.5 ton CO₂.'
+        impactVal: 1000,
+        feedback: 'Fast fashion, hem karbon hem su kullanımı açısından en yüksek etkili tüketim biçimlerinden biri. Yılda ~1 ton CO₂.'
       }
     ]
   },
@@ -249,27 +249,27 @@ const questions = [
         icon: '🥗',
         label: 'Az (%10–20)',
         desc: 'Bazen bozuluyor',
-        score: 200,
+        score: 100,
         impact: 'low',
-        impactVal: 200,
+        impactVal: 100,
         feedback: 'Düşük gıda israfı iyi bir seviye. Meal prep ve alışveriş listesi kullanmak bu oranı daha da düşürebilir.'
       },
       {
         icon: '🍽️',
         label: 'Orta (%30–40)',
         desc: 'Zaman zaman çok alıyorum',
-        score: 450,
+        score: 250,
         impact: 'med',
-        impactVal: 450,
+        impactVal: 250,
         feedback: 'Ortalama hane gıdasının ~%30\'unu çöpe atar. Her çöpe atılan 1 kg gıda, yaklaşık 4.5 kg CO₂ eşdeğeri salınım yaratır.'
       },
       {
         icon: '🚮',
         label: 'Yüksek (%50+)',
         desc: 'Çok fazla bozulan / çöpen gıda',
-        score: 900,
+        score: 350,
         impact: 'high',
-        impactVal: 900,
+        impactVal: 350,
         feedback: 'Yüksek gıda israfı hem kaynak hem emisyon açısından büyük bir kayıp. Yılda ~900 kg CO₂ sadece israf edilen gıdadan geliyor olabilir.'
       }
     ]
@@ -310,9 +310,9 @@ const questions = [
         icon: '🚯',
         label: 'Hiç yapmıyorum',
         desc: 'Geri dönüşüm kutularına koymuyorum',
-        score: 200,
+        score: 100,
         impact: 'high',
-        impactVal: 200,
+        impactVal: 100,
         feedback: 'Geri dönüşüm yapmamak, düzenli çöp depolama alanlarında bozunan organik maddelerden metan salınımına katkıda bulunur.'
       }
     ]

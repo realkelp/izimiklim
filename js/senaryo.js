@@ -489,11 +489,21 @@ function renderRound() {
 }
 
 function makeChoice(index) {
-  if (selectedChoice !== null) return; // prevent double click
-  selectedChoice = index;
-
   const round  = rounds[currentRound];
   const choice = round.choices[index];
+
+  // If the same choice is clicked, do nothing
+  if (selectedChoice === index) return;
+
+  // If changing choice in the same round, subtract previous choice's impact
+  if (selectedChoice !== null) {
+    const prevChoice = round.choices[selectedChoice];
+    totalCarbon -= prevChoice.carbonDelta;
+    sustainScore = Math.max(0, Math.min(100, sustainScore - prevChoice.sustainDelta));
+    gameHistory = gameHistory.filter(h => h.round !== currentRound);
+  }
+
+  selectedChoice = index;
 
   // Update scores
   totalCarbon  += choice.carbonDelta;
@@ -502,7 +512,6 @@ function makeChoice(index) {
   // Visual selection
   document.querySelectorAll('.choice-btn').forEach((btn, i) => {
     btn.classList.toggle('selected', i === index);
-    btn.style.pointerEvents = 'none';
   });
 
   // Store in history
